@@ -55,40 +55,50 @@ public class NTHbmProviderImpl implements UdfpsHbmProvider {
         return this.mHbmEnabled;
     }
 
-    /* JADX WARN: Multi-variable type inference failed */
-    /* JADX WARN: Type inference failed for: r4v7, types: [java.lang.StringBuilder] */
     private void writeHbmNode(boolean z) {
-        boolean z2;
-        FileOutputStream fileOutputStream;
         String str = z ? "1" : "0";
-
-	try{
-             fileOutputStream = new FileOutputStream(HBM_PATH);
-             fileOutputStream.write(str.getBytes());
-             fileOutputStream.close();
-	     Slog.e(TAG, "sent hbm_path");
-            }catch(Exception e){
-		Slog.e(TAG, e.getMessage());
-	    }
-    }
-
-    /* JADX WARN: Multi-variable type inference failed */
-    /* JADX WARN: Type inference failed for: r2v0 */
-    /* JADX WARN: Type inference failed for: r2v1 */
-    /* JADX WARN: Type inference failed for: r2v2, types: [java.io.FileOutputStream] */
-    /* JADX WARN: Type inference failed for: r2v4, types: [java.lang.String] */
-    private void writeOldHbmNode(boolean z) {
-        boolean z2;
-        FileOutputStream fileOutputStream;
-        String str = z ? "1" : "0";
-        try{
-             fileOutputStream = new FileOutputStream(OLD_HBM_PATH);
-             fileOutputStream.write(str.getBytes());
-             fileOutputStream.close();
-             Slog.e(TAG, "sent hbm_path");
-            }catch(Exception e){
-                Slog.e(TAG, e.getMessage());
+        boolean result = false;
+        FileOutputStream fileOutputStream = null;
+        try {
+            fileOutputStream = new FileOutputStream(HBM_PATH);
+            Slog.d(TAG, "start write node:/sys/class/drm/sde-conn-1-DSI-1/hbm_mode, data:" + str);
+            fileOutputStream.write(str.getBytes("US-ASCII"));
+            result = true;
+        } catch (IOException e) {
+            Slog.e(TAG, "Unable to write /sys/class/drm/sde-conn-1-DSI-1/hbm_mode" + e.getMessage());
+            writeOldHbmNode(z);
+        } finally {
+            if (fileOutputStream != null) {
+                try {
+                    fileOutputStream.close();
+                } catch (IOException e) {
+                }
             }
+        }
+        Slog.d(TAG, "end write node:/sys/class/drm/sde-conn-1-DSI-1/hbm_mode, data:" + str + ",  result: " + result);
     }
 
+    private void writeOldHbmNode(boolean z) {
+        String str = z ? "1" : "0";
+        boolean result = false;
+        FileOutputStream fileOutputStream = null;
+        try {
+            fileOutputStream = new FileOutputStream(OLD_HBM_PATH);
+            Slog.d(TAG, "start write node:/sys/class/drm/sde-conn-1-DSI-1/hbm_mode, data:" + str);
+            fileOutputStream.write(str.getBytes("US-ASCII"));
+            result = true;
+        } catch (IOException e) {
+            Slog.e(TAG, "Unable to write /sys/class/drm/sde-conn-1-DSI-1/hbm_mode" + e.getMessage());
+            writeOldHbmNode(z);
+        } finally {
+            if (fileOutputStream != null) {
+                try {
+                    fileOutputStream.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+        Slog.d(TAG, "end write node:/sys/class/drm/sde-conn-1-DSI-1/hbm_mode, data:" + str + ",  result: " + result);
+
+    }
 }
