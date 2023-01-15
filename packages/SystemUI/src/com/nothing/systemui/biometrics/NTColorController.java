@@ -8,7 +8,7 @@ import android.content.IntentFilter;
 import android.hardware.display.ColorDisplayManager;
 import android.provider.Settings;
 import com.android.systemui.dagger.SysUISingleton;
-import com.nothing.systemui.util.NTLogUtil;
+import android.util.Log;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import javax.inject.Inject;
@@ -34,7 +34,7 @@ public class NTColorController {
     private final BroadcastReceiver mTimeChangedReceiver = new BroadcastReceiver() { // from class: com.nothing.systemui.biometrics.NTColorController.1
         @Override // android.content.BroadcastReceiver
         public void onReceive(Context context, Intent intent) {
-            if (NTColorController.this.mColorDisplayManager.getNightDisplayAutoMode() == 0 || !NTColorController.this.isNightModeCustomActive()) {
+            if (mColorDisplayManager.getNightDisplayAutoMode() == 0 || !isNightModeCustomActive()) {
                 return;
             }
             NTColorController.this.resetNightMode();
@@ -48,11 +48,11 @@ public class NTColorController {
         this.mColorDisplayManager = (ColorDisplayManager) this.mContext.getSystemService(ColorDisplayManager.class);
         int integer = this.mContext.getResources().getInteger(17694809);
         this.mTemperatureDefault = integer;
-        NTLogUtil.i(TAG, "mTemperatureDefault=" + integer);
+        Log.i(TAG, "mTemperatureDefault=" + integer);
     }
 
     public boolean isColorControlled() {
-        NTLogUtil.i(TAG, "isColorControlled=" + this.mIsColorControlled);
+        Log.i(TAG, "isColorControlled=" + this.mIsColorControlled);
         return this.mIsColorControlled;
     }
 
@@ -71,7 +71,7 @@ public class NTColorController {
     }
 
     public void restoreDisplaySettingsIfNeeded() {
-        NTLogUtil.i(TAG, "restoreDisplaySettingsIfNeeded getNightDisplayAutoMode===" + this.mColorDisplayManager.getNightDisplayAutoMode());
+        Log.i(TAG, "restoreDisplaySettingsIfNeeded getNightDisplayAutoMode===" + mColorDisplayManager.getNightDisplayAutoMode());
         this.mIsColorControlled = false;
         restoreNightMode();
         restoreColorTemp();
@@ -112,7 +112,7 @@ public class NTColorController {
     }
 
     public void resetInversion() {
-        NTLogUtil.i(TAG, "resetInversion  mIsInversionHasReset=" + this.mIsInversionHasReset);
+        Log.i(TAG, "resetInversion  mIsInversionHasReset=" + this.mIsInversionHasReset);
         synchronized (this) {
             if (this.mIsInversionHasReset) {
                 return;
@@ -122,18 +122,18 @@ public class NTColorController {
             if (i == 1) {
                 Settings.Secure.putInt(this.mContentResolver, "accessibility_display_inversion_enabled", 0);
             }
-            NTLogUtil.i(TAG, "resetInversion  savedInversion=" + this.savedInversion);
+            Log.i(TAG, "resetInversion  savedInversion=" + this.savedInversion);
             this.mIsInversionHasReset = true;
         }
     }
 
     public void restoreInversion() {
-        NTLogUtil.i(TAG, "restoreInversion  mIsInversionHasReset=" + this.mIsInversionHasReset);
+        Log.i(TAG, "restoreInversion  mIsInversionHasReset=" + this.mIsInversionHasReset);
         synchronized (this) {
             if (!this.mIsInversionHasReset) {
                 return;
             }
-            NTLogUtil.i(TAG, "restoreInversion  savedInversion=" + this.savedInversion);
+            Log.i(TAG, "restoreInversion  savedInversion=" + this.savedInversion);
             int i = this.savedInversion;
             if (i != 0) {
                 Settings.Secure.putInt(this.mContentResolver, "accessibility_display_inversion_enabled", i);
@@ -145,39 +145,38 @@ public class NTColorController {
     /* JADX INFO: Access modifiers changed from: private */
     public void resetNightMode() {
         int i = Settings.Secure.getInt(this.mContentResolver, "night_display_activated", 0);
-        NTLogUtil.i(TAG, "resetNightMode settings: " + i);
+        Log.i(TAG, "resetNightMode settings: " + i);
         if (i == 1) {
-            this.mColorDisplayManager.setNightDisplayActivatedImmediately(false);
+            //mColorDisplayManager.setNightDisplayActivatedImmediately(false);
             this.mIsNightDisplayReset = true;
         }
     }
 
     private void restoreNightMode() {
-        NTLogUtil.i(TAG, "saveStatus:" + getKeyguardQsEyeStatus() + " mIsNightDisplayReset: " + this.mIsNightDisplayReset);
+        Log.i(TAG, "saveStatus:" + getKeyguardQsEyeStatus() + " mIsNightDisplayReset: " + this.mIsNightDisplayReset);
         boolean z = true;
         if (getKeyguardQsEyeStatus() == -1) {
             if (!this.mIsNightDisplayReset) {
                 return;
             }
-            this.mColorDisplayManager.setNightDisplayActivatedImmediately(true);
+            //mColorDisplayManager.setNightDisplayActivatedImmediately(true);
             this.mIsNightDisplayReset = false;
             return;
         }
-        ColorDisplayManager colorDisplayManager = this.mColorDisplayManager;
         if (getKeyguardQsEyeStatus() != 0) {
             z = false;
         }
-        colorDisplayManager.setNightDisplayActivated(z);
+        mColorDisplayManager.setNightDisplayActivated(z);
         saveKeyguardQsEyeStatus(-1);
     }
 
     /* JADX INFO: Access modifiers changed from: private */
     public boolean isNightModeCustomActive() {
-        LocalTime nightDisplayCustomEndTime = this.mColorDisplayManager.getNightDisplayCustomEndTime();
-        LocalTime nightDisplayCustomStartTime = this.mColorDisplayManager.getNightDisplayCustomStartTime();
+        LocalTime nightDisplayCustomEndTime = mColorDisplayManager.getNightDisplayCustomEndTime();
+        LocalTime nightDisplayCustomStartTime = mColorDisplayManager.getNightDisplayCustomStartTime();
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime dateTimeAfter = getDateTimeAfter(nightDisplayCustomEndTime, getDateTimeBefore(nightDisplayCustomStartTime, now));
-        NTLogUtil.i(TAG, "isNightModeCustomActive startTime=" + ((Object) nightDisplayCustomStartTime) + ", endTime=" + ((Object) nightDisplayCustomEndTime));
+        Log.i(TAG, "isNightModeCustomActive startTime=" + ((Object) nightDisplayCustomStartTime) + ", endTime=" + ((Object) nightDisplayCustomEndTime));
         return now.isBefore(dateTimeAfter);
     }
 

@@ -12,7 +12,7 @@ import android.view.SurfaceSession;
 import android.view.WindowManager;
 import com.android.server.LocalServices;
 import com.android.systemui.biometrics.UdfpsController;
-import com.nothing.systemui.util.NTLogUtil;
+import android.util.Log;
 /* loaded from: classes3.dex */
 public class NTFingerprintDimLayer {
     private static final boolean DEBUG = true;
@@ -75,7 +75,7 @@ public class NTFingerprintDimLayer {
             int i2 = point.y;
             this.mDisplayHeight = Math.max(i, i2);
             this.mDisplayWidth = Math.min(i, i2);
-            NTLogUtil.i(NTFingerprintDimLayer.TAG, "FingerprintDimLayerController mDisplayWidth=" + this.mDisplayWidth + ", mDisplayHeight=" + this.mDisplayHeight);
+            Log.i(NTFingerprintDimLayer.TAG, "FingerprintDimLayerController mDisplayWidth=" + this.mDisplayWidth + ", mDisplayHeight=" + this.mDisplayHeight);
         }
 
         public void dismiss() {
@@ -97,7 +97,7 @@ public class NTFingerprintDimLayer {
         }
 
         public void draw(float f) {
-            NTLogUtil.d(NTFingerprintDimLayer.TAG, "draw alpha=" + f);
+            Log.d(NTFingerprintDimLayer.TAG, "draw alpha=" + f);
             if (f == 0.0f && this.mIsScreenOn) {
                 dismiss();
             } else if (this.mSurfaceControl == null) {
@@ -114,7 +114,7 @@ public class NTFingerprintDimLayer {
                 }
                 SurfaceControl.openTransaction();
                 if (this.mSurfaceControl == null) {
-                    NTLogUtil.d(NTFingerprintDimLayer.TAG, "===createSurface===");
+                    Log.d(NTFingerprintDimLayer.TAG, "===createSurface===");
                     try {
                         SurfaceControl.Builder builder = new SurfaceControl.Builder(this.mSurfaceSession);
                         builder.setName("NTFingerprintDimLayer");
@@ -123,7 +123,7 @@ public class NTFingerprintDimLayer {
                         builder.setColorLayer();
                         this.mSurfaceControl = builder.build();
                     } catch (Surface.OutOfResourcesException e) {
-                        NTLogUtil.e(NTFingerprintDimLayer.TAG, "Unable to create surface." + ((Object) e));
+                        Log.e(NTFingerprintDimLayer.TAG, "Unable to create surface." + ((Object) e));
                     }
                     new SurfaceControl.Transaction().setBufferSize(this.mSurfaceControl, this.mDisplayWidth, this.mDisplayHeight).apply();
                     Surface surface = new Surface();
@@ -138,7 +138,7 @@ public class NTFingerprintDimLayer {
         private void destroySurface() {
             synchronized (this.mLock) {
                 if (this.mSurfaceControl != null) {
-                    NTLogUtil.d(NTFingerprintDimLayer.TAG, "===destroySurface===");
+                    Log.d(NTFingerprintDimLayer.TAG, "===destroySurface===");
                     new SurfaceControl.Transaction().remove(this.mSurfaceControl).apply();
                     Surface surface = this.mSurface;
                     if (surface != null) {
@@ -148,78 +148,35 @@ public class NTFingerprintDimLayer {
                     this.mSurfaceAlpha = 0.0f;
                 }
             }
-            if (NTFingerprintDimLayer.this.mUdfpsController != null) {
-                NTFingerprintDimLayer.this.mUdfpsController.checkToReattachView();
+//            if (mUdfpsController != null) {
+  //              mUdfpsController.checkToReattachView();
+    //        }
+        }
+
+
+        public void showSurface(float alpha, boolean force) {
+            Log.d(TAG, "showSurface alpha=" + alpha);
+            synchronized (mLock) {
+                if (!force && TextUtils.equals(String.valueOf(mSurfaceAlpha), String.valueOf(alpha))) {
+                    return;
+                }
+                mSurfaceAlpha = alpha;
+                SurfaceControl.openTransaction();
+                Trace.traceBegin(8L, "set_alpha");
+                Log.i(TAG, "mSurfaceControl show dimlayer alpha=" + alpha);
+                SurfaceControl.Transaction transaction = new SurfaceControl.Transaction();
+                transaction.setAlpha(mSurfaceControl, alpha);
+                transaction.show(mSurfaceControl);
+                transaction.setSkipScreenshot(mSurfaceControl, true);
+                transaction.apply();
+                Trace.traceEnd(8L);
+                SurfaceControl.closeTransaction();
             }
         }
 
-        /* JADX WARN: Code restructure failed: missing block: B:7:0x002a, code lost:
-            if (android.text.TextUtils.equals(java.lang.String.valueOf(r6.mSurfaceAlpha), java.lang.String.valueOf(r7)) == false) goto L5;
-         */
-        /*
-            Code decompiled incorrectly, please refer to instructions dump.
-            To view partially-correct add '--show-bad-code' argument
-        */
-        private boolean showSurface(float r7, boolean r8) {
-            /*
-                r6 = this;
-                java.lang.String r0 = "mSurfaceControl show dimlayer alpha="
-                java.lang.String r1 = "FpDimLayer"
-                java.lang.StringBuilder r2 = new java.lang.StringBuilder
-                java.lang.String r3 = "showSurface alpha="
-                r2.<init>(r3)
-                java.lang.StringBuilder r2 = r2.mo6010append(r7)
-                java.lang.String r2 = r2.toString()
-                com.nothing.systemui.util.NTLogUtil.d(r1, r2)
-                java.lang.Object r1 = r6.mLock
-                monitor-enter(r1)
-                r2 = 1
-                if (r8 != 0) goto L2c
-                float r8 = r6.mSurfaceAlpha     // Catch: java.lang.Throwable -> L6e
-                java.lang.String r8 = java.lang.String.valueOf(r8)     // Catch: java.lang.Throwable -> L6e
-                java.lang.String r3 = java.lang.String.valueOf(r7)     // Catch: java.lang.Throwable -> L6e
-                boolean r8 = android.text.TextUtils.equals(r8, r3)     // Catch: java.lang.Throwable -> L6e
-                if (r8 != 0) goto L67
-            L2c:
-                r6.mSurfaceAlpha = r7     // Catch: java.lang.Throwable -> L6e
-                android.view.SurfaceControl.openTransaction()     // Catch: java.lang.Throwable -> L6e
-                java.lang.String r8 = "set_alpha"
-                r3 = 8
-                android.os.Trace.traceBegin(r3, r8)     // Catch: java.lang.Throwable -> L69
-                java.lang.String r8 = "FpDimLayer"
-                java.lang.StringBuilder r5 = new java.lang.StringBuilder     // Catch: java.lang.Throwable -> L69
-                r5.<init>(r0)     // Catch: java.lang.Throwable -> L69
-                java.lang.StringBuilder r0 = r5.mo6010append(r7)     // Catch: java.lang.Throwable -> L69
-                java.lang.String r0 = r0.toString()     // Catch: java.lang.Throwable -> L69
-                com.nothing.systemui.util.NTLogUtil.i(r8, r0)     // Catch: java.lang.Throwable -> L69
-                android.view.SurfaceControl$Transaction r8 = new android.view.SurfaceControl$Transaction     // Catch: java.lang.Throwable -> L69
-                r8.<init>()     // Catch: java.lang.Throwable -> L69
-                android.view.SurfaceControl r0 = r6.mSurfaceControl     // Catch: java.lang.Throwable -> L69
-                r8.setAlpha(r0, r7)     // Catch: java.lang.Throwable -> L69
-                android.view.SurfaceControl r7 = r6.mSurfaceControl     // Catch: java.lang.Throwable -> L69
-                r8.show(r7)     // Catch: java.lang.Throwable -> L69
-                android.view.SurfaceControl r6 = r6.mSurfaceControl     // Catch: java.lang.Throwable -> L69
-                r8.setSkipScreenshot(r6, r2)     // Catch: java.lang.Throwable -> L69
-                r8.apply()     // Catch: java.lang.Throwable -> L69
-                android.os.Trace.traceEnd(r3)     // Catch: java.lang.Throwable -> L69
-                android.view.SurfaceControl.closeTransaction()     // Catch: java.lang.Throwable -> L6e
-            L67:
-                monitor-exit(r1)     // Catch: java.lang.Throwable -> L6e
-                return r2
-            L69:
-                r6 = move-exception
-                android.view.SurfaceControl.closeTransaction()     // Catch: java.lang.Throwable -> L6e
-                throw r6     // Catch: java.lang.Throwable -> L6e
-            L6e:
-                r6 = move-exception
-                monitor-exit(r1)     // Catch: java.lang.Throwable -> L6e
-                throw r6
-            */
-            throw new UnsupportedOperationException("Method not decompiled: com.nothing.systemui.biometrics.NTFingerprintDimLayer.FingerprintDimLayerController.showSurface(float, boolean):boolean");
-        }
 
         public void updateAlpha(float f) {
-            NTLogUtil.d(NTFingerprintDimLayer.TAG, "updateAlpha alpha=" + f);
+            Log.d(NTFingerprintDimLayer.TAG, "updateAlpha alpha=" + f);
             if (this.mSurfaceControl == null) {
                 return;
             }

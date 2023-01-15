@@ -77,7 +77,6 @@ import com.android.systemui.util.time.SystemClock;
 
 import com.nothing.systemui.biometrics.NTColorController;
 import com.nothing.systemui.biometrics.NTFingerprintBrightnessController;
-import com.nothing.systemui.util.NTLogUtil;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -115,6 +114,7 @@ public class UdfpsController implements DozeReceiver {
     private final WindowManager mWindowManager;
     private final DelayableExecutor mFgExecutor;
     @NonNull private final Executor mBiometricExecutor;
+    @NonNull private boolean mBouncerVisibility;
     @NonNull private final PanelExpansionStateManager mPanelExpansionStateManager;
     @NonNull private final StatusBarStateController mStatusBarStateController;
     @NonNull private final KeyguardStateController mKeyguardStateController;
@@ -130,8 +130,6 @@ public class UdfpsController implements DozeReceiver {
     @NonNull private final LockscreenShadeTransitionController mLockscreenShadeTransitionController;
     @NonNull private NTFingerprintBrightnessController mNTBrightnessController;
     @NonNull private NTColorController mNTColorController;
-    private boolean mOnFingerDown;
-    private boolean mOnFingerDownOver;
     @Nullable private final UdfpsDisplayModeProvider mUdfpsDisplayMode;
     @NonNull private final ConfigurationController mConfigurationController;
     @NonNull private final SystemClock mSystemClock;
@@ -648,6 +646,7 @@ public class UdfpsController implements DozeReceiver {
         mActivityLaunchAnimator = activityLaunchAnimator;
         mAlternateTouchProvider = alternateTouchProvider.orElse(null);
         mBiometricExecutor = biometricsExecutor;
+	mBouncerVisibility = false;
 
         mOrientationListener = new BiometricDisplayListener(
                 context,
@@ -935,12 +934,12 @@ public class UdfpsController implements DozeReceiver {
     }
 
     public void showDimLayer(boolean z, String str) {
-        synchronized (this.mLock) {
+        synchronized (this) {
             if (mNTBrightnessController == null) {
-                NTLogUtil.e(TAG, "mNTBrightnessController is null");
+                Log.e(TAG, "mNTBrightnessController is null");
                 return;
             }
-            NTLogUtil.i(TAG, "Show DimLayer open= " + z + " reason= " + str);
+            Log.i(TAG, "Show DimLayer open= " + z + " reason= " + str);
             if (z) {
                 mNTBrightnessController.drawDimLayer(true);
             } else {
@@ -954,15 +953,16 @@ public class UdfpsController implements DozeReceiver {
         boolean isUdfpsEnrolled = mKeyguardUpdateMonitor.isUdfpsEnrolled();
         boolean isDozing = mStatusBarStateController.isDozing();
         boolean flag = true; 
-        //boolean z2 = mStatusBarStateController.getState() == 2;
-        boolean isKeyguardVisible = ((KeyguardUpdateMonitor) Dependency.get(KeyguardUpdateMonitor.class)).isKeyguardVisible();
-        boolean isDeviceInteractive = ((KeyguardUpdateMonitor) Dependency.get(KeyguardUpdateMonitor.class)).isDeviceInteractive();
-        boolean isGoingToSleep = ((KeyguardUpdateMonitor) Dependency.get(KeyguardUpdateMonitor.class)).isGoingToSleep();
+        boolean z2 = mStatusBarStateController.getState() == 2;
+        boolean isKeyguardVisible = mKeyguardUpdateMonitor.isKeyguardVisible();
+        boolean isDeviceInteractive = mKeyguardUpdateMonitor.isDeviceInteractive();
+        boolean isGoingToSleep = mKeyguardUpdateMonitor.isGoingToSleep();
+	boolean isBouncerShowing = mKeyguardViewManager.isBouncerShowing();
         UdfpsControllerOverlay udfpsControllerOverlay = this.mOverlay;
-        if (udfpsControllerOverlay == null || udfpsControllerOverlay.getOverlayView() == null || !isUdfpsEnrolled || isDozing || !isKeyguardVisible || !isDeviceInteractive || isGoingToSleep || this.mBouncerVisibility) {
+        if (udfpsControllerOverlay == null || udfpsControllerOverlay.getOverlayView() == null || !isUdfpsEnrolled || isDozing || !isKeyguardVisible || !isDeviceInteractive || isGoingToSleep || isBouncerShowing) {
             flag = false;
         }
-        //NTLogUtil.i(TAG, "HBM shouldStartHBM:" + z + ",  hasFingerprintEnrolled=" + isUdfpsEnrolled + ",getState=" + this.mStatusBarStateController.getState() + ", isDozing =" + isDozing + ", statusBarShadeLocked=" + z2 + ", keyguardVisible=" + isKeyguardVisible + ", deviceInteractive=" + isDeviceInteractive + ", isGoingToSleep=" + isGoingToSleep + ", mBouncerVisibility=" + this.mBouncerVisibility);
+        Log.i(TAG, "HBM shouldStartHBM:" + flag + ",  hasFingerprintEnrolled=" + isUdfpsEnrolled + ",getState=" + this.mStatusBarStateController.getState() + ", isDozing =" + isDozing + ", statusBarShadeLocked=" + z2 + ", keyguardVisible=" + isKeyguardVisible + ", deviceInteractive=" + isDeviceInteractive + ", isGoingToSleep=" + isGoingToSleep + ", mBouncerVisibility=" + isBouncerShowing);
         return flag;
     }
 

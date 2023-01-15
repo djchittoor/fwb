@@ -10,7 +10,7 @@ import android.os.Looper;
 import android.provider.Settings;
 import com.android.systemui.R;
 import com.android.systemui.biometrics.UdfpsController;
-import com.nothing.systemui.util.NTLogUtil;
+import android.util.Log;
 /* loaded from: classes3.dex */
 public class NTFingerprintBrightnessController {
     private static final String TAG = "FpBrightnessController";
@@ -53,12 +53,12 @@ public class NTFingerprintBrightnessController {
     }
 
     public void dismiss() {
-        NTLogUtil.d(TAG, "=dismiss=");
+        Log.d(TAG, "=dismiss=");
         this.mWorkerHandler.removeCallbacks(this.mDimLayerRunnable);
         this.mWorkerHandler.post(new Runnable() { // from class: com.nothing.systemui.biometrics.NTFingerprintBrightnessController.1
             @Override // java.lang.Runnable
             public void run() {
-                NTLogUtil.d(NTFingerprintBrightnessController.TAG, "===dismiss dimlayer===");
+                Log.d(NTFingerprintBrightnessController.TAG, "===dismiss dimlayer===");
                 NTFingerprintBrightnessController.this.mNTFingerprintDimLayer.dismiss();
             }
         });
@@ -68,7 +68,7 @@ public class NTFingerprintBrightnessController {
 
     public boolean needUpdateAlpha() {
         boolean z = this.mCurrentBrightness != getScreenBrightnessInt();
-        NTLogUtil.d(TAG, "=needUpdateAlpha=" + z);
+        Log.d(TAG, "=needUpdateAlpha=" + z);
         return z;
     }
 
@@ -81,7 +81,7 @@ public class NTFingerprintBrightnessController {
             } else if (screenBrightnessInt != -2) {
                 f = getAlpha(screenBrightnessInt);
             }
-            NTLogUtil.d(TAG, "updateDimLayerAlphaIfNeed brightness=" + screenBrightnessInt + ", alpha=" + f);
+            Log.d(TAG, "updateDimLayerAlphaIfNeed brightness=" + screenBrightnessInt + ", alpha=" + f);
             this.mCurrentBrightness = screenBrightnessInt;
             this.mDimLayerUpdateAlphaRunnable.setAlpha(f);
             this.mWorkerHandler.removeCallbacks(this.mDimLayerUpdateAlphaRunnable);
@@ -92,13 +92,13 @@ public class NTFingerprintBrightnessController {
     public void drawDimLayer(boolean z) {
         int screenBrightnessInt = getScreenBrightnessInt();
         if (this.mCurrentBrightness == screenBrightnessInt && !z) {
-            NTLogUtil.d(TAG, "don't draw fingerprint dimlayer again, brightness=" + screenBrightnessInt);
+            Log.d(TAG, "don't draw fingerprint dimlayer again, brightness=" + screenBrightnessInt);
             return;
         }
         this.mCurrentBrightness = screenBrightnessInt;
         try {
             if (this.mDelayDraw) {
-                NTLogUtil.d(TAG, "delay waking up 16ms for drawing fingerprint dimlayer.");
+                Log.d(TAG, "delay waking up 16ms for drawing fingerprint dimlayer.");
                 Thread.sleep(16L);
                 this.mDelayDraw = false;
             }
@@ -110,7 +110,7 @@ public class NTFingerprintBrightnessController {
         } else if (screenBrightnessInt != -2) {
             f = getAlpha(screenBrightnessInt);
         }
-        NTLogUtil.d(TAG, "drawDimLayer brightness=" + screenBrightnessInt + ", alpha=" + f);
+        Log.d(TAG, "drawDimLayer brightness=" + screenBrightnessInt + ", alpha=" + f);
         this.mDimLayerRunnable.setAlpha(f);
         this.mWorkerHandler.removeCallbacks(this.mDimLayerRunnable);
         this.mWorkerHandler.post(this.mDimLayerRunnable);
@@ -119,7 +119,7 @@ public class NTFingerprintBrightnessController {
 
     private float getAlpha(int i) {
         int i2 = (int) (i * 13.784314f);
-        NTLogUtil.d(TAG, "get brightness = " + i + ", mAlphaMap.length=" + this.mAlphaMap.length + ", brightnessIndex=" + i2);
+        Log.d(TAG, "get brightness = " + i + ", mAlphaMap.length=" + this.mAlphaMap.length + ", brightnessIndex=" + i2);
         if (i2 >= 0) {
             int[] iArr = this.mAlphaMap;
             if (i2 >= iArr.length) {
@@ -150,13 +150,13 @@ public class NTFingerprintBrightnessController {
             if (this.mRegistered) {
                 this.mResolver.unregisterContentObserver(this);
             }
-            NTLogUtil.i(NTFingerprintBrightnessController.TAG, "register");
+            Log.i(NTFingerprintBrightnessController.TAG, "register");
             this.mResolver.registerContentObserver(NTFingerprintBrightnessController.URI_SCREEN_BRIGHTNESS, true, this);
             this.mRegistered = true;
         }
 
         public void unregister() {
-            NTLogUtil.i(NTFingerprintBrightnessController.TAG, "unregister");
+            Log.i(NTFingerprintBrightnessController.TAG, "unregister");
             if (this.mRegistered) {
                 this.mResolver.unregisterContentObserver(this);
             }
@@ -165,9 +165,9 @@ public class NTFingerprintBrightnessController {
 
         @Override // android.database.ContentObserver
         public void onChange(boolean z, Uri uri) {
-            NTLogUtil.i(NTFingerprintBrightnessController.TAG, "onChange uri=" + ((Object) uri));
+            Log.i(NTFingerprintBrightnessController.TAG, "onChange uri=" + ((Object) uri));
             if (NTFingerprintBrightnessController.URI_SCREEN_BRIGHTNESS.equals(uri)) {
-                NTLogUtil.i(NTFingerprintBrightnessController.TAG, "newScreenBrightness=" + NTFingerprintBrightnessController.this.getScreenBrightnessInt());
+                Log.i(NTFingerprintBrightnessController.TAG, "newScreenBrightness=" + NTFingerprintBrightnessController.this.getScreenBrightnessInt());
                 NTFingerprintBrightnessController.this.updateDimLayerAlphaIfNeed();
             }
         }
@@ -184,7 +184,7 @@ public class NTFingerprintBrightnessController {
 
         @Override // java.lang.Runnable
         public void run() {
-            NTLogUtil.d(NTFingerprintBrightnessController.TAG, "drawDimLayer alpha = " + this.mAlpha);
+            Log.d(NTFingerprintBrightnessController.TAG, "drawDimLayer alpha = " + this.mAlpha);
             if (NTFingerprintBrightnessController.this.mAlphaCallback != null) {
                 NTFingerprintBrightnessController.this.mAlphaCallback.onAlpha(this.mAlpha);
             }
@@ -211,7 +211,7 @@ public class NTFingerprintBrightnessController {
 
         @Override // java.lang.Runnable
         public void run() {
-            NTLogUtil.d(NTFingerprintBrightnessController.TAG, "DimLayerUpdateAlphaRunnable alpha = " + this.mAlpha);
+            Log.d(NTFingerprintBrightnessController.TAG, "DimLayerUpdateAlphaRunnable alpha = " + this.mAlpha);
             if (NTFingerprintBrightnessController.this.mAlphaCallback != null) {
                 NTFingerprintBrightnessController.this.mAlphaCallback.onAlpha(this.mAlpha);
             }
