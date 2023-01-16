@@ -218,7 +218,7 @@ public class UdfpsController implements DozeReceiver {
         }
         float f2 = 1.0f - f;
         Log.d(TAG, "updateAlpha:" + f2);
-        overlayView.getAnimationViewController().updateAlpha(f2);
+        ((UdfpsAnimationViewController) overlayView.getAnimationViewController()).updateAlpha(f2);
     }
         };
 

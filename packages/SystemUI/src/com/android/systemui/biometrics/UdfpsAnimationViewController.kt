@@ -184,6 +184,12 @@ abstract class UdfpsAnimationViewController<T : UdfpsAnimationView>(
         view.postInvalidate()
     }
 
+    fun updateAlpha(f: Float) {
+
+       (mView as UdfpsAnimationView).setAlpha(f)
+
+    }
+
     /**
      * Whether to listen for touches outside of the view.
      */
