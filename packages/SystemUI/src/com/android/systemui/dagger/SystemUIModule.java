@@ -96,8 +96,6 @@ import com.android.systemui.wmshell.BubblesManager;
 import com.android.systemui.R;
 import com.android.wm.shell.bubbles.Bubbles;
 
-import com.android.systemui.biometrics.NothingUdfpsDisplayModeProvider;
-
 import java.util.Optional;
 import java.util.concurrent.Executor;
 
@@ -177,10 +175,6 @@ public abstract class SystemUIModule {
     @Binds
     public abstract NotificationRowBinder bindNotificationRowBinder(
             NotificationRowBinderImpl notificationRowBinder);
-
-    @SysUISingleton
-    @Binds
-    abstract UdfpsDisplayModeProvider bindUdfpsDisplayModeProvider(NothingUdfpsDisplayModeProvider provider);
 
     @SysUISingleton
     @Provides

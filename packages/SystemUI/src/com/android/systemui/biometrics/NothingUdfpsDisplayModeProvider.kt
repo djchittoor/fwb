@@ -5,61 +5,54 @@ import android.util.Log
 import java.io.FileOutputStream
 import java.io.IOException
 import com.android.systemui.biometrics.UdfpsDisplayModeProvider
-import com.android.systemui.dagger.SysUISingleton
-import com.android.systemui.dagger.qualifiers.DisplayId
-import javax.inject.Inject
 
-@SysUISingleton
-class NothingUdfpsDisplayModeProvider: UdfpsDisplayModeProvider {
+class NothingUdfpsDisplayModeProvider : UdfpsDisplayModeProvider {
     private val HBM_PATH = "/sys/class/drm/sde-conn-1-DSI-1/hbm_mode"
     private val OLD_HBM_PATH = "/sys/class/backlight/panel0-backlight/hbm_mode"
     private val TAG = "NtHBMProviderImpl"
     private var mHbmEnabled = false
 
-    override fun enable(isEnabled: Runnable?) {
+    override fun enable(onEnabled: Runnable?) {
         if (mHbmEnabled) {
             return
         }
-        if (runnable != null) {
-            runnable.run()
-        }
-        val fileOutputStream: FileOutputStream
+        val fileOutputStream: FileOutputStream = FileOutputStream(HBM_PATH)
         try {
-            fileOutputStream = FileOutputStream(HBM_PATH)
             fileOutputStream.write("1".toByteArray())
             fileOutputStream.close()
             mHbmEnabled = true
         } catch (e: IOException) {
             try {
-                fileOutputStream = FileOutputStream(OLD_HBM_PATH)
-                fileOutputStream.write("1".toByteArray())
-                fileOutputStream.close()
+                val oldFileOutputStream = FileOutputStream(OLD_HBM_PATH)
+                oldFileOutputStream.write("0".toByteArray())
+                oldFileOutputStream.close()
                 mHbmEnabled = true
             } catch (e2: IOException) {
                 Slog.e(TAG, "Could not write to hbm_mode file", e2)
             }
         }
+        onEnabled?.run()
     }
 
-    override fun disable() {
+    override fun disable(onDisabled: Runnable?) {
         if (!mHbmEnabled) {
             return
         }
-        val fileOutputStream: FileOutputStream
+        val fileOutputStream: FileOutputStream = FileOutputStream(HBM_PATH)
         try {
-            fileOutputStream = FileOutputStream(HBM_PATH)
             fileOutputStream.write("0".toByteArray())
             fileOutputStream.close()
             mHbmEnabled = false
         } catch (e: IOException) {
             try {
-                fileOutputStream = FileOutputStream(OLD_HBM_PATH)
-                fileOutputStream.write("0".toByteArray())
-                fileOutputStream.close()
+                val oldFileOutputStream = FileOutputStream(OLD_HBM_PATH)
+                oldFileOutputStream.write("0".toByteArray())
+                oldFileOutputStream.close()
                 mHbmEnabled = false
             } catch (e2: IOException) {
                 Slog.e(TAG, "Could not write to hbm_mode file", e2)
             }
         }
+        onDisabled?.run()
     }
 }
