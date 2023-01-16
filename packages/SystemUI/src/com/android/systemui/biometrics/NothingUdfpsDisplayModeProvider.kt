@@ -1,12 +1,13 @@
 package com.android.systemui.biometrics
 
+import android.content.Context
 import android.util.Slog
 import android.util.Log
 import java.io.FileOutputStream
 import java.io.IOException
 import com.android.systemui.biometrics.UdfpsDisplayModeProvider
 
-class NothingUdfpsDisplayModeProvider : UdfpsDisplayModeProvider {
+class NothingUdfpsDisplayModeProvider constructor (private val context: Context) : UdfpsDisplayModeProvider {
     private val HBM_PATH = "/sys/class/drm/sde-conn-1-DSI-1/hbm_mode"
     private val OLD_HBM_PATH = "/sys/class/backlight/panel0-backlight/hbm_mode"
     private val TAG = "NtHBMProviderImpl"

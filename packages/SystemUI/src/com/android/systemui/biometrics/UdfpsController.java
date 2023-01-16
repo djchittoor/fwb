@@ -77,6 +77,7 @@ import com.android.systemui.util.time.SystemClock;
 
 import com.nothing.systemui.biometrics.NTColorController;
 import com.nothing.systemui.biometrics.NTFingerprintBrightnessController;
+import com.nothing.systemui.biometrics.NTFingerprintDimLayer;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -126,7 +127,6 @@ public class UdfpsController implements DozeReceiver {
     @NonNull private final FalsingManager mFalsingManager;
     @NonNull private final PowerManager mPowerManager;
     @NonNull private final AccessibilityManager mAccessibilityManager;
-    private NTFingerprintBrightnessController.AlphaCallback mAlphaCallback;
     @NonNull private final LockscreenShadeTransitionController mLockscreenShadeTransitionController;
     @NonNull private NTFingerprintBrightnessController mNTBrightnessController;
     @NonNull private NTColorController mNTColorController;
@@ -207,6 +207,20 @@ public class UdfpsController implements DozeReceiver {
             mScreenOn = false;
         }
     };
+
+    private NTFingerprintBrightnessController.AlphaCallback mAlphaCallback = new NTFingerprintBrightnessController.AlphaCallback() { // from class: com.android.systemui.biometrics.UdfpsController.11
+    @Override // com.nothing.systemui.biometrics.NTFingerprintBrightnessController.AlphaCallback
+    public void onAlpha(float f) {
+        UdfpsView overlayView;
+        Log.d(TAG, "onAlpha:" + f);
+        if (mOverlay == null || mOverlay.getOverlayView() == null || (overlayView = mOverlay.getOverlayView()) == null || overlayView.getAnimationViewController() == null) {
+            return;
+        }
+        float f2 = 1.0f - f;
+        Log.d(TAG, "updateAlpha:" + f2);
+        overlayView.getAnimationViewController().updateAlpha(f2);
+    }
+        };
 
     public class UdfpsOverlayController extends IUdfpsOverlayController.Stub {
         @Override
@@ -647,6 +661,11 @@ public class UdfpsController implements DozeReceiver {
         mAlternateTouchProvider = alternateTouchProvider.orElse(null);
         mBiometricExecutor = biometricsExecutor;
 	mBouncerVisibility = false;
+
+        mNTColorController = new NTColorController(context);
+        NTFingerprintBrightnessController nTFingerprintBrightnessController = new NTFingerprintBrightnessController(context, this);
+        mNTBrightnessController = nTFingerprintBrightnessController;
+        nTFingerprintBrightnessController.setAlphaCallback(this.mAlphaCallback);
 
         mOrientationListener = new BiometricDisplayListener(
                 context,
