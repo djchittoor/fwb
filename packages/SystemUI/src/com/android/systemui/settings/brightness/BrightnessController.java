@@ -52,6 +52,7 @@ import com.android.settingslib.RestrictedLockUtilsInternal;
 import com.android.systemui.broadcast.BroadcastDispatcher;
 import com.android.systemui.dagger.qualifiers.Background;
 import com.android.systemui.settings.CurrentUserTracker;
+import com.android.systemui.settings.brightness.NothingBrightness;
 import com.android.systemui.statusbar.policy.BrightnessMirrorController;
 
 import javax.inject.Inject;
@@ -109,6 +110,10 @@ public class BrightnessController implements ToggleSlider.Listener, MirroredBrig
     private ValueAnimator mSliderAnimator;
 
     private Vibrator mVibrator;
+
+    private NothingBrightness mNothingBrightness = new NothingBrightness();
+    private boolean mNTBrightnessEnabled = true;
+
     private static final VibrationEffect BRIGHTNESS_SLIDER_HAPTIC =
             VibrationEffect.get(VibrationEffect.EFFECT_POP);
 
@@ -236,6 +241,10 @@ public class BrightnessController implements ToggleSlider.Listener, MirroredBrig
     private final Runnable mUpdateSliderRunnable = new Runnable() {
         @Override
         public void run() {
+	    if (mNothingBrightness.isSliderTouched()) {
+		return;
+	    }
+
             final boolean inVrMode = mIsVrModeEnabled;
             final BrightnessInfo info = mContext.getDisplay().getBrightnessInfo();
             if (info == null) {
@@ -323,7 +332,7 @@ public class BrightnessController implements ToggleSlider.Listener, MirroredBrig
                     Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL :
                     Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC,
                 UserHandle.USER_CURRENT));
-	
+
         mVibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
         if (mVibrator == null || !mVibrator.hasVibrator()) {
             mVibrator = null;
@@ -351,6 +360,7 @@ public class BrightnessController implements ToggleSlider.Listener, MirroredBrig
 
         final float minBacklight;
         final float maxBacklight;
+        final float valFloat;
         final int metric;
 
         if (mIsVrModeEnabled) {
@@ -364,18 +374,22 @@ public class BrightnessController implements ToggleSlider.Listener, MirroredBrig
             minBacklight = mBrightnessMin;
             maxBacklight = mBrightnessMax;
         }
-        final float valFloat = MathUtils.min(
-                convertGammaToLinearFloat(value, minBacklight, maxBacklight),
-                maxBacklight);
+        if (!mNTBrightnessEnabled) {
+            valFloat = MathUtils.min(
+                    convertGammaToLinearFloat(value, minBacklight, maxBacklight),
+                    maxBacklight);
+        } else {
+            valFloat = MathUtils.map(
+                    0.0f, 65535.0f, minBacklight, maxBacklight, mNothingBrightness.convertToNTSliderValForManual(value));
+            Log.d(TAG, "onChanged value: " + value + ", brightness: " + valFloat);
+        }
         if (stopTracking) {
             // TODO(brightnessfloat): change to use float value instead.
             MetricsLogger.action(mContext, metric,
                     BrightnessSynchronizer.brightnessFloatToInt(valFloat));
-
         }
 
         setBrightness(valFloat);
-
 
         // Give haptic feedback only if brightness is changed manually
         if (tracking)
@@ -452,9 +466,19 @@ public class BrightnessController implements ToggleSlider.Listener, MirroredBrig
             // then the slider does not need to animate, since the brightness will not change.
             return;
         }
-        // Returns GAMMA_SPACE_MIN - GAMMA_SPACE_MAX
-        final int sliderVal = convertLinearToGammaFloat(brightnessValue, min, max);
-        animateSliderTo(sliderVal);
+
+	// Calculate slider value based on brightness value
+        final int sliderVal;
+        if (mNTBrightnessEnabled) {
+            sliderVal = (mNothingBrightness.calculateSliderVal(min, max, brightnessValue, mControl.getValue()));
+            if (sliderVal == -1) {
+                return;
+            }
+        } else {
+            // Returns GAMMA_SPACE_MIN - GAMMA_SPACE_MAX
+            sliderVal = convertLinearToGammaFloat(brightnessValue, min, max);
+        }
+            animateSliderTo(sliderVal);
     }
 
     private void animateSliderTo(int target) {
